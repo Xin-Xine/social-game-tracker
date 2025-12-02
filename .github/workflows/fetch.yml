@@ -25,6 +25,8 @@ jobs:
 
       - name: Run scraping script
         run: python scripts/fetch_with_gemini.py
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
 
       - name: Commit and push JSON
         run: |
