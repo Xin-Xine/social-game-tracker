@@ -1,14 +1,14 @@
 import os
 import json
-from google import genai
-from google.genai import types
-from google.generativeai import ToolInput
+import google.generativeai as genai
+from google.generativeai import ToolInput  # 必要なら
 
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 if not GEMINI_API_KEY:
     raise ValueError("GEMINI_API_KEY が設定されていません。")
 
-client = genai.Client(api_key=GEMINI_API_KEY)
+# 最新 SDK では Client は不要、直接 genai.configure() を使用
+genai.configure(api_key=GEMINI_API_KEY)
 
 # 対象ゲームと公式お知らせURL
 GAMES = [
@@ -42,17 +42,17 @@ URL:
 """
 
     try:
-        # 最新 Gemini API 仕様：tools を使って URL context を渡す
-        response = client.models.generate_content(
+        # 最新 Gemini API 仕様に沿った呼び出し
+        response = genai.models.generate_content(
             model="gemini-2.5-flash",
-            contents=prompt,
-            config=types.GenerateContentConfig(
-                temperature=0.0,
-                max_output_tokens=1000,
-                tools=[types.ToolInput(name="url_context", input=url)]
-            )
+            messages=[{"role": "user", "content": prompt}],
+            temperature=0.0,
+            max_output_tokens=1000,
+            # URL context は tools ではなく input_context を利用する場合もある
+            # tools=[ToolInput(name="url_context", input=url)]  # 必要に応じて有効化
         )
 
+        # 最新 SDK では response.output_text が返る
         text = getattr(response, "output_text", None)
         if not text:
             print(f"No output from AI for {game_name}")
