@@ -6,12 +6,14 @@ async function loadUpdates() {
     const res = await fetch("./data/result.json");
     const data = await res.json();
 
+    // 日付ごとにグループ化
     const grouped = {};
     data.forEach(item => {
       if (!grouped[item.date]) grouped[item.date] = [];
       grouped[item.date].push(item);
     });
 
+    // 日付順にソートして HTML を生成
     container.innerHTML = Object.keys(grouped).sort().map(date => {
       return `
         <div class="day">
@@ -28,13 +30,11 @@ async function loadUpdates() {
       `;
     }).join("");
 
-  } catch(e) {
-    container.innerHTML = "読み込み失敗";
+  } catch (e) {
+    container.innerHTML = "更新情報の読み込みに失敗しました";
+    console.error(e);
   }
 }
 
-document.getElementById("refresh").addEventListener("click", () => {
-  alert("ローカルでは Python を実行してください。\nGitHub上では Actions の手動実行で更新されます。");
-});
-
-loadUpdates();
+// ページ読み込み時に更新情報を表示
+window.addEventListener("DOMContentLoaded", loadUpdates);
