@@ -13,8 +13,8 @@ async function loadUpdates() {
       grouped[item.date].push(item);
     });
 
-    // 日付順にソートして HTML を生成
-    container.innerHTML = Object.keys(grouped).sort().map(date => {
+    // 日付降順にソートして HTML を生成
+    container.innerHTML = Object.keys(grouped).sort((a, b) => b.localeCompare(a)).map(date => {
       return `
         <div class="day">
           <h3>${date}</h3>
