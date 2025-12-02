@@ -1,49 +1,35 @@
-name: Fetch Genshin Updates
+name: Fetch Game Updates
 
-# 手動実行と毎日0時の自動実行
 on:
-  workflow_dispatch:   # 手動実行用
-  schedule:           # 毎日0時に自動実行
+  workflow_dispatch:
+  schedule:
     - cron: '0 0 * * *'
-
-# デフォルト permissions を明示
-permissions:
-  contents: write   # これで GITHUB_TOKEN が書き込み可能
 
 jobs:
   fetch:
     runs-on: ubuntu-latest
 
     steps:
-      # リポジトリのチェックアウト
       - name: Checkout repository
         uses: actions/checkout@v3
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
 
-      # Python セットアップ
       - name: Setup Python
         uses: actions/setup-python@v4
         with:
           python-version: '3.11'
 
-      # 必要パッケージのインストール
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install requests beautifulsoup4
+          pip install requests
 
-      # Python スクレイピング実行
-      - name: Run scraping script
-        run: python scripts/fetch_genshin.py
+      - name: Run AI scraping script
+        run: python scripts/fetch_with_ai.py
 
-      # JSON をコミットして push
       - name: Commit and push JSON
         run: |
           git config --global user.name "github-actions"
           git config --global user.email "actions@github.com"
-
           git add data/result.json
-          git commit -m "Update Genshin data" || echo "No changes to commit"
-
-          git push origin HEAD:main
+          git commit -m "Update game data" || echo "No changes"
+          git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git HEAD:main
