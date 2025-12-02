@@ -34,4 +34,4 @@ jobs:
           git add data/result.json
           git commit -m "Update Genshin data" || echo "No changes to commit"
 
-          git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git HEAD:main
+          git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/Xin-Xine/social-game-tracker.git HEAD:main
