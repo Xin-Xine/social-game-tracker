@@ -1,1 +1,23 @@
-[]
+[
+  {
+    "date": "2025-12-02",
+    "game": "原神",
+    "title": "Ver1.2.0 アップデート",
+    "description": "新イベント開始、バランス調整など",
+    "link": "https://genshin.hoyoverse.com/ja/news/detail/12345"
+  },
+  {
+    "date": "2025-12-05",
+    "game": "原神",
+    "title": "Ver1.2.1 小規模パッチ",
+    "description": "一部不具合修正、イベント調整",
+    "link": "https://genshin.hoyoverse.com/ja/news/detail/12346"
+  },
+  {
+    "date": "2025-12-10",
+    "game": "原神",
+    "title": "期間限定イベント開始",
+    "description": "冬のスペシャルイベント開始",
+    "link": "https://genshin.hoyoverse.com/ja/news/detail/12347"
+  }
+]
