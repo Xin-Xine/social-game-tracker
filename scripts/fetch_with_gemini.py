@@ -1,7 +1,7 @@
 import os
 import json
 import requests
-from google import genai  # SDK
+from google import genai
 
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 if not GEMINI_API_KEY:
@@ -10,8 +10,7 @@ if not GEMINI_API_KEY:
 client = genai.Client(api_key=GEMINI_API_KEY)
 
 GAMES = [
-    {"name": "原神", "url": "https://genshin.hoyoverse.com/ja/news"},
-    # 他ゲームも追加可能
+    {"name": "原神", "url": "https://genshin.hoyoverse.com/ja/news"}
 ]
 
 OUTPUT_FILE = "data/result.json"
@@ -22,44 +21,35 @@ def fetch_html(url):
     return res.text
 
 def call_gemini_ai(html, game_name):
-    """
-    SDK最新仕様に合わせ、messages形式で呼び出し。
-    JSON例を提示して安定化。
-    """
-    system_prompt = "あなたはゲームアップデート情報を抽出するAIです。"
-    user_prompt = f"""
-以下はゲーム {game_name} の公式お知らせページHTMLです。
-HTMLからアップデート情報のみを抽出し、以下のJSON形式に沿って出力してください。
-JSON形式例:
+    prompt = f"""
+ゲーム「{game_name}」公式お知らせページの HTML が以下です。
+これを解析し、アップデート情報（バージョンアップ、不具合修正、メンテナンス、イベント開始など）だけを抽出して、以下の JSON 配列形式で返してください。
+
+JSON フォーマット:
 [
   {{
     "game": "ゲーム名",
     "date": "YYYY-MM-DD",
-    "title": "アップデートタイトル",
+    "title": "タイトル",
     "description": "内容要約",
     "link": "公式URL"
   }}
 ]
+
 HTML:
 {html}
 """
-
-    response = client.responses.create(
+    response = client.models.generate_content(
         model="gemini-2.5-flash",
-        messages=[
-            {"role": "system", "content": system_prompt},
-            {"role": "user", "content": user_prompt}
-        ],
+        contents=prompt,
         temperature=0,
         max_output_tokens=1000
     )
-
-    text_output = response.output_text
-
+    text = response.text
     try:
-        return json.loads(text_output)
+        return json.loads(text)
     except json.JSONDecodeError:
-        print(f"AI parse failed for {game_name}, raw output:\n{text_output}")
+        print(f"JSON parse error for {game_name}, raw output:\n{text}")
         return []
 
 def main():
