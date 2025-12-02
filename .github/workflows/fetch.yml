@@ -1,7 +1,7 @@
 name: Fetch Genshin Updates
 
 on:
-  workflow_dispatch:   # 手動実行用
+  workflow_dispatch:   # 手動実行
   schedule:           # 毎日0時に自動実行
     - cron: '0 0 * * *'
 
