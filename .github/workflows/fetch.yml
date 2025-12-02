@@ -35,8 +35,8 @@ jobs:
       - name: Commit and push JSON
         run: |
           # ここは自分のGitHubユーザー名・メールに置き換えてください
-          git config --global user.name "Xin_Xine"  
-          git config --global user.email "shingo.shinjo2@gmail.com"  
+          git config --global user.name "kakuu"  
+          git config --global user.email "kakuu2@gmail.com"  
 
           git add data/result.json
           git commit -m "Update Genshin data" || echo "No changes to commit"
