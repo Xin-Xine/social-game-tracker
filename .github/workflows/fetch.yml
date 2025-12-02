@@ -1,0 +1,34 @@
+name: Fetch Updates
+
+on:
+  schedule:
+    - cron: '0 0 * * *'   # 毎日0時
+  workflow_dispatch:
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Fetch update info
+        run: |
+          echo "[
+            {
+              \"game\": \"Example Game\",
+              \"title\": \"サンプル更新\",
+              \"date\": \"$(date +%Y-%m-%d)\",
+              \"description\": \"GitHub Actionsで自動生成されたデータ\",
+              \"link\": \"https://example.com\"
+            }
+          ]" > data/result.json
+
+      - name: Commit and push
+        run: |
+          git config --global user.email "github-actions@example.com"
+          git config --global user.name "GitHub Actions"
+          git add data/result.json
+          git commit -m "Update result.json" || exit 0
+          git push
