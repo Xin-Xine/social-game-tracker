@@ -1,7 +1,55 @@
-body { background: #f5f5f5; padding: 20px; }
-header, main, footer { max-width: 900px; margin: auto; }
-.card { margin: 20px 0; padding: 20px; background: white; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.1); }
-.update-item { border-bottom: 1px solid #ddd; padding: 10px 0; }
-.update-item:last-child { border-bottom: none; }
-.day { margin-bottom: 20px; }
-button#refresh { margin-bottom: 10px; padding: 8px 12px; cursor: pointer; }
+body {
+  font-family: 'Segoe UI', sans-serif;
+  background-color: #f7f7f7;
+  margin: 0;
+  padding: 0;
+}
+
+header {
+  background-color: #4a90e2;
+  color: white;
+  padding: 1rem;
+  text-align: center;
+}
+
+main {
+  padding: 1rem;
+}
+
+.day {
+  background-color: white;
+  margin-bottom: 1rem;
+  padding: 1rem;
+  border-radius: 8px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+.day h3 {
+  margin-top: 0;
+  color: #333;
+}
+
+.update-item {
+  border-top: 1px solid #eee;
+  padding-top: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.update-item h4 {
+  margin: 0.2rem 0;
+  color: #4a90e2;
+}
+
+.update-item p {
+  margin: 0.2rem 0;
+  color: #555;
+}
+
+.update-item a {
+  color: #f39c12;
+  text-decoration: none;
+}
+
+.update-item a:hover {
+  text-decoration: underline;
+}
