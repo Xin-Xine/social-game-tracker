@@ -50,13 +50,17 @@ HTML:
         )
     )
 
-    text = response.text
+    text = getattr(response, "output_text", None)  # 最新 SDK では output_text
+    if text is None:
+        print(f"No output from AI for {game_name}")
+        return []
+
     try:
         return json.loads(text)
     except json.JSONDecodeError:
         print(f"AI parse failed for {game_name}, raw output:\n{text}")
         return []
-
+        
 def main():
     all_updates = []
     for g in GAMES:
