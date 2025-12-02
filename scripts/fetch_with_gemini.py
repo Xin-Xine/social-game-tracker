@@ -11,19 +11,24 @@ client = genai.Client(api_key=os.environ.get("GEMINI_API_KEY"))
 def fetch_genshin_updates():
     url = "https://genshin.hoyoverse.com/ja/news"
     try:
-        html = requests.get(url).text
+        # HTML取得
+        response = requests.get(url, timeout=10)
+        response.raise_for_status()
+        html = response.text
+        print("=== HTML取得成功 ===")
+        print(html[:1000])  # 先頭1000文字だけログに出す（長すぎ防止）
+
+        # BeautifulSoupで記事部分を抽出
         soup = BeautifulSoup(html, "html.parser")
-
-        # ニュース記事部分を抽出（原神公式は li.news-item が多い）
         articles = soup.select("li.news-item")
+        if not articles:
+            print("記事要素が見つかりませんでした")
         text_blocks = [a.get_text(" ", strip=True) for a in articles]
+        print(f"抽出記事数: {len(text_blocks)}")
 
-        # チャンク処理（長文対策）
-        chunk_size = 5000
-        updates = []
-        for i in range(0, len(text_blocks), chunk_size):
-            chunk = "\n".join(text_blocks[i:i+chunk_size])
-            prompt = f"""
+        # AIに渡すプロンプト
+        chunk = "\n".join(text_blocks[:10])  # とりあえず最初の10件だけ
+        prompt = f"""
 ゲーム「原神」公式お知らせページのテキストです。
 このテキストから最新アップデート情報のみを以下のJSON形式で抽出してください。
 
@@ -41,18 +46,24 @@ JSON形式例:
 テキスト:
 {chunk}
 """
-            response = client.models.generate_content(
-                model="gemini-2.5",
-                contents=[prompt],
-                temperature=0.0,
-                max_output_tokens=1000
-            )
-            if response.text:
-                try:
-                    updates.extend(json.loads(response.text))
-                except Exception as e:
-                    print(f"JSON parse error: {e}")
+        ai_response = client.models.generate_content(
+            model="gemini-2.5",
+            contents=[prompt],
+            temperature=0.0,
+            max_output_tokens=1000
+        )
+
+        print("=== AI返り値 ===")
+        print(ai_response.text)
+
+        updates = []
+        if ai_response.text:
+            try:
+                updates = json.loads(ai_response.text)
+            except Exception as e:
+                print(f"JSON parse error: {e}")
         return updates
+
     except Exception as e:
         print(f"Error fetching Genshin updates: {e}")
         return []
