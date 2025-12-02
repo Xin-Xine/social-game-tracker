@@ -1,34 +1,33 @@
-import requests
-import json
 import os
+import json
+from google import genai  # 公式 SDK
 
-# Gemini APIキーは環境変数から取得
+# APIキーは環境変数から取得
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 if not GEMINI_API_KEY:
-    raise ValueError("GEMINI_API_KEY が設定されていません。GitHub Secrets に登録してください。")
+    raise ValueError("GEMINI_API_KEY が設定されていません。")
+
+# SDK クライアント生成
+client = genai.Client(api_key=GEMINI_API_KEY)
 
 # 対象ゲームリスト
 GAMES = [
     {"name": "原神", "url": "https://genshin.hoyoverse.com/ja/news"},
-    {"name": "GameB", "url": "https://example.com/gameb/news"}
+    # 他ゲーム追加可能
 ]
 
 OUTPUT_FILE = "data/result.json"
 
-# HTML取得
 def fetch_html(url):
+    import requests
     res = requests.get(url, timeout=10)
     res.raise_for_status()
     return res.text
 
-# Gemini API呼び出し（サンプル形式）
 def call_gemini_ai(html, game_name):
     """
     HTMLを解析してアップデート情報のみを抽出し、JSON形式で返す
     """
-    # APIエンドポイント（仮）
-    url = "https://api.generativeai.google/v1beta2/models/gemini-code-assist-1:generateText"
-    
     prompt = f"""
     以下はゲーム {game_name} の公式お知らせページHTMLです。
     このHTMLからアップデート情報のみ抽出し、JSONで出力してください。
@@ -45,29 +44,24 @@ def call_gemini_ai(html, game_name):
     HTML:
     {html}
     """
-    
-    headers = {
-        "Authorization": f"Bearer {GEMINI_API_KEY}",
-        "Content-Type": "application/json"
-    }
-    
-    data = {
-        "prompt": prompt,
-        "temperature": 0,
-        "maxOutputTokens": 1000
-    }
-    
-    resp = requests.post(url, headers=headers, json=data)
-    resp.raise_for_status()
-    # Gemini の応答を解析してJSONを返す（ここはAPI仕様に合わせて調整）
-    result_text = resp.json().get("candidates", [{}])[0].get("output", "{}")
+
+    response = client.models.generate_content(
+        model="gemini-2.5-flash",
+        prompt=prompt,
+        temperature=0,
+        max_output_tokens=1000
+    )
+
+    # Gemini SDK の返り値からテキストを取得
+    result_text = response.text
+
+    # JSON化
     try:
         return json.loads(result_text)
     except json.JSONDecodeError:
         print(f"AI parse failed for {game_name}, raw output:\n{result_text}")
         return []
 
-# メイン処理
 def main():
     all_updates = []
     for g in GAMES:
