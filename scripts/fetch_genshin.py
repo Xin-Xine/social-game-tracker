@@ -2,7 +2,7 @@ import requests
 from bs4 import BeautifulSoup
 import json
 
-# 対象URL（原神公式ニュース例）
+# 対象URL（例: 原神公式ニュース）
 URL = "https://genshin.mihoyo.com/ja/news"
 
 try:
@@ -30,7 +30,6 @@ for item in soup.select(".news-card")[:5]:  # 最新5件
         "link": link_el["href"]
     })
 
-# JSON出力
 with open("data/result.json", "w", encoding="utf-8") as f:
     json.dump(updates, f, ensure_ascii=False, indent=2)
 
