@@ -1,8 +1,9 @@
-name: Fetch Updates
+name: Fetch Genshin Updates
 
+# 毎日0時に自動実行、手動トリガーも可
 on:
   schedule:
-    - cron: '0 0 * * *'   # 毎日0時
+    - cron: '0 0 * * *'
   workflow_dispatch:
 
 jobs:
@@ -10,25 +11,33 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repo
+      # 1. リポジトリをチェックアウト
+      - name: Checkout repository
         uses: actions/checkout@v3
 
-      - name: Fetch update info
-        run: |
-          echo "[
-            {
-              \"game\": \"Example Game\",
-              \"title\": \"サンプル更新\",
-              \"date\": \"$(date +%Y-%m-%d)\",
-              \"description\": \"GitHub Actionsで自動生成されたデータ\",
-              \"link\": \"https://example.com\"
-            }
-          ]" > data/result.json
+      # 2. Pythonセットアップ
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'  # 必要に応じて変更
 
-      - name: Commit and push
+      # 3. ライブラリインストール
+      - name: Install dependencies
         run: |
-          git config --global user.email "github-actions@example.com"
-          git config --global user.name "GitHub Actions"
+          python -m pip install --upgrade pip
+          pip install requests beautifulsoup4
+
+      # 4. スクレイピング実行
+      - name: Fetch Genshin updates
+        run: python scripts/fetch_genshin.py
+
+      # 5. JSONをコミット＆push
+      - name: Commit and push JSON
+        run: |
+          # ここは自分のGitHubユーザー名・メールに置き換えてください
+          git config --global user.name "Xin_Xine"  
+          git config --global user.email "shingo.shinjo2@gmail.com"  
+
           git add data/result.json
-          git commit -m "Update result.json" || exit 0
+          git commit -m "Update Genshin data" || echo "No changes to commit"
           git push
