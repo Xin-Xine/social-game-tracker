@@ -1,36 +1,61 @@
+# scripts/fetch_genshin.py
 import requests
 from bs4 import BeautifulSoup
 import json
+from datetime import datetime
 
-# 対象URL（例: 原神公式ニュース）
-URL = "https://genshin.mihoyo.com/ja/news"
+# 取得対象 URL（原神公式アップデートページ例）
+URL = "https://genshin.hoyoverse.com/ja/news"
 
-try:
-    res = requests.get(URL)
-    res.raise_for_status()
-except Exception as e:
-    print(f"ページ取得エラー: {e}")
-    exit(1)
+# データを書き込むファイル
+OUTPUT_FILE = "data/result.json"
 
-soup = BeautifulSoup(res.text, "html.parser")
-updates = []
+def fetch_updates():
+    updates = []
 
-for item in soup.select(".news-card")[:5]:  # 最新5件
-    title_el = item.select_one(".title")
-    date_el = item.select_one(".date")
-    link_el = item.select_one("a")
-    summary_el = item.select_one(".summary")
-    if not (title_el and date_el and link_el and summary_el):
-        continue
-    updates.append({
-        "game": "原神",
-        "title": title_el.text.strip(),
-        "date": date_el.text.strip(),
-        "description": summary_el.text.strip(),
-        "link": link_el["href"]
-    })
+    try:
+        res = requests.get(URL, timeout=10)
+        res.raise_for_status()
+        soup = BeautifulSoup(res.text, "html.parser")
 
-with open("data/result.json", "w", encoding="utf-8") as f:
-    json.dump(updates, f, ensure_ascii=False, indent=2)
+        # ニュース記事のセレクタ例（2025/12 現行構造に対応）
+        # 適宜クラス名を公式サイトに合わせて変更してください
+        articles = soup.select("ul.news-list li.news-item")
+        for art in articles:
+            date_tag = art.select_one(".date")
+            title_tag = art.select_one(".title")
+            link_tag = art.select_one("a")
+            desc_tag = art.select_one(".summary")  # 要約があれば
 
-print(f"{len(updates)}件の更新を取得しました")
+            if not date_tag or not title_tag or not link_tag:
+                continue
+
+            date_text = date_tag.text.strip()
+            try:
+                # 日付形式を YYYY-MM-DD に統一
+                date_obj = datetime.strptime(date_text, "%Y.%m.%d")
+                date_str = date_obj.strftime("%Y-%m-%d")
+            except ValueError:
+                date_str = date_text
+
+            updates.append({
+                "date": date_str,
+                "game": "原神",
+                "title": title_tag.text.strip(),
+                "description": desc_tag.text.strip() if desc_tag else "",
+                "link": link_tag["href"]
+            })
+
+    except Exception as e:
+        print("Error fetching updates:", e)
+
+    return updates
+
+def save_json(updates):
+    with open(OUTPUT_FILE, "w", encoding="utf-8") as f:
+        json.dump(updates, f, ensure_ascii=False, indent=2)
+
+if __name__ == "__main__":
+    data = fetch_updates()
+    save_json(data)
+    print(f"Fetched {len(data)} updates.")
