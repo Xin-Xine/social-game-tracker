@@ -1,4 +1,4 @@
-name: Fetch Game Updates
+name: Fetch Game Updates with Gemini
 
 on:
   workflow_dispatch:
@@ -24,7 +24,9 @@ jobs:
           pip install requests
 
       - name: Run AI scraping script
-        run: python scripts/fetch_with_ai.py
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: python scripts/fetch_with_gemini.py
 
       - name: Commit and push JSON
         run: |
