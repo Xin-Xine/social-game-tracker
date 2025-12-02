@@ -1,18 +1,8 @@
 import os
-import json
-import google.generativeai as genai
+from google import genai
 
-GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
-if not GEMINI_API_KEY:
-    raise ValueError("GEMINI_API_KEY が設定されていません。")
-
-genai.configure(api_key=GEMINI_API_KEY)
-
-GAMES = [
-    {"name": "原神", "url": "https://genshin.hoyoverse.com/ja/news"},
-]
-
-OUTPUT_FILE = "data/result.json"
+# APIキーを環境変数から取得
+client = genai.Client(api_key=os.environ.get("GEMINI_API_KEY"))
 
 def call_gemini_ai_url(game_name, url):
     prompt = f"""
@@ -33,43 +23,17 @@ JSON形式例:
 URL:
 {url}
 """
-
     try:
-        # 最新 SDK の正しい呼び出し
-        response = genai.responses.create(
+        response = client.models.generate_content(
             model="gemini-2.5",
-            input=prompt,
+            contents=[prompt],
             temperature=0.0,
             max_output_tokens=1000
         )
 
-        # text 出力を取得
-        text = response.output_text if hasattr(response, "output_text") else None
-        if not text:
-            print(f"No output from AI for {game_name}")
-            return []
-
-        try:
-            return json.loads(text)
-        except Exception as e:
-            print(f"JSON parse error for {game_name}: {e}")
-            return []
+        text = response.text
+        return json.loads(text) if text else []
 
     except Exception as e:
         print(f"Error fetching {game_name}: {e}")
         return []
-
-def main():
-    all_updates = []
-    for g in GAMES:
-        updates = call_gemini_ai_url(g["name"], g["url"])
-        all_updates.extend(updates)
-
-    os.makedirs(os.path.dirname(OUTPUT_FILE), exist_ok=True)
-    with open(OUTPUT_FILE, "w", encoding="utf-8") as f:
-        json.dump(all_updates, f, ensure_ascii=False, indent=2)
-
-    print(f"Saved {len(all_updates)} updates.")
-
-if __name__ == "__main__":
-    main()
