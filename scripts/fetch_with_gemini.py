@@ -1,39 +1,40 @@
-import os
-from google import genai
+async function loadUpdates() {
+  const container = document.getElementById("calendar");
+  container.innerHTML = "読み込み中…";
 
-# APIキーを環境変数から取得
-client = genai.Client(api_key=os.environ.get("GEMINI_API_KEY"))
+  try {
+    const res = await fetch("./data/result.json");
+    const data = await res.json();
 
-def call_gemini_ai_url(game_name, url):
-    prompt = f"""
-ゲーム「{game_name}」公式お知らせページのURLです。
-このページを解析して、最新アップデート情報のみを以下のJSON形式で出力してください。
+    // 日付ごとにグループ化
+    const grouped = {};
+    data.forEach(item => {
+      if (!grouped[item.date]) grouped[item.date] = [];
+      grouped[item.date].push(item);
+    });
 
-JSON形式例:
-[
-  {{
-    "game": "ゲーム名",
-    "date": "YYYY-MM-DD",
-    "title": "アップデートタイトル",
-    "description": "内容要約",
-    "link": "公式URL"
-  }}
-]
+    // 日付順にソートして HTML を生成
+    container.innerHTML = Object.keys(grouped).sort().map(date => {
+      return `
+        <div class="day">
+          <h3>${date}</h3>
+          ${grouped[date].map(u => `
+            <div class="update-item">
+              <h4>${u.title}</h4>
+              <p>ゲーム名：${u.game}</p>
+              <p>${u.description}</p>
+              <a href="${u.link}" target="_blank">公式サイト</a>
+            </div>
+          `).join("")}
+        </div>
+      `;
+    }).join("");
 
-URL:
-{url}
-"""
-    try:
-        response = client.models.generate_content(
-            model="gemini-2.5",
-            contents=[prompt],
-            temperature=0.0,
-            max_output_tokens=1000
-        )
+  } catch (e) {
+    container.innerHTML = "更新情報の読み込みに失敗しました";
+    console.error(e);
+  }
+}
 
-        text = response.text
-        return json.loads(text) if text else []
-
-    except Exception as e:
-        print(f"Error fetching {game_name}: {e}")
-        return []
+// ページ読み込み時に更新情報を表示
+window.addEventListener("DOMContentLoaded", loadUpdates);
