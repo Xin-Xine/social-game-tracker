@@ -41,20 +41,29 @@ URL:
 """
 
     try:
+        # 最新 Gemini API 仕様：tools を使って URL context を渡す
         response = client.models.generate_content(
-        model="gemini-2.5-flash",
-        contents=prompt,
-        config=types.GenerateContentConfig(
-            temperature=0.0,
-            max_output_tokens=1000,
-            url_contexts=[types.UrlContext(uri=url)]  # ここが最新仕様
+            model="gemini-2.5-flash",
+            contents=prompt,
+            config=types.GenerateContentConfig(
+                temperature=0.0,
+                max_output_tokens=1000,
+                tools=[types.ToolInput(name="url_context", input=url)]
+            )
         )
-    )
+
         text = getattr(response, "output_text", None)
         if not text:
             print(f"No output from AI for {game_name}")
             return []
-        return json.loads(text)
+
+        # JSON化
+        try:
+            return json.loads(text)
+        except Exception as e:
+            print(f"JSON parse error for {game_name}: {e}")
+            return []
+
     except Exception as e:
         print(f"Error fetching {game_name}: {e}")
         return []
