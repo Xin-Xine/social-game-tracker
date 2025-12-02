@@ -1,6 +1,5 @@
 import os
 import json
-import requests
 from google import genai
 from google.genai import types
 
@@ -10,22 +9,21 @@ if not GEMINI_API_KEY:
 
 client = genai.Client(api_key=GEMINI_API_KEY)
 
+# 対象ゲームと公式お知らせURL
 GAMES = [
     {"name": "原神", "url": "https://genshin.hoyoverse.com/ja/news"},
-    # 他ゲームもここに追加可能
+    # 他ゲームも追加可能
 ]
 
 OUTPUT_FILE = "data/result.json"
 
-def fetch_html(url):
-    res = requests.get(url, timeout=10)
-    res.raise_for_status()
-    return res.text
-
-def call_gemini_ai(html, game_name):
+def call_gemini_ai_url(game_name, url):
+    """
+    URLだけ渡してAIにページを解析させ、JSONを返す
+    """
     prompt = f"""
-ゲーム「{game_name}」公式お知らせページHTMLです。
-HTMLからアップデート情報のみを抽出し、以下のJSON形式で出力してください。
+ゲーム「{game_name}」公式お知らせページのURLです。
+このページを解析して、最新アップデート情報のみを以下のJSON形式で出力してください。
 
 JSON形式例:
 [
@@ -38,39 +36,36 @@ JSON形式例:
   }}
 ]
 
-HTML:
-{html}
+URL:
+{url}
 """
-    response = client.models.generate_content(
-        model="gemini-2.5-flash",
-        contents=prompt,
-        config=types.GenerateContentConfig(
-            temperature=0.0,
-            max_output_tokens=1000
-        )
-    )
-
-    text = getattr(response, "output_text", None)  # 最新 SDK では output_text
-    if text is None:
-        print(f"No output from AI for {game_name}")
-        return []
 
     try:
+        response = client.models.generate_content(
+            model="gemini-2.5-flash",
+            contents=prompt,
+            config=types.GenerateContentConfig(
+                temperature=0.0,
+                max_output_tokens=1000,
+                url_context=types.UrlContext(url=url)  # ここで URL context tool を利用
+            )
+        )
+        text = getattr(response, "output_text", None)
+        if not text:
+            print(f"No output from AI for {game_name}")
+            return []
         return json.loads(text)
-    except json.JSONDecodeError:
-        print(f"AI parse failed for {game_name}, raw output:\n{text}")
+    except Exception as e:
+        print(f"Error fetching {game_name}: {e}")
         return []
-        
+
 def main():
     all_updates = []
     for g in GAMES:
-        try:
-            html = fetch_html(g["url"])
-            updates = call_gemini_ai(html, g["name"])
-            all_updates.extend(updates)
-        except Exception as e:
-            print(f"Error fetching {g['name']}: {e}")
+        updates = call_gemini_ai_url(g["name"], g["url"])
+        all_updates.extend(updates)
 
+    # JSON保存
     os.makedirs(os.path.dirname(OUTPUT_FILE), exist_ok=True)
     with open(OUTPUT_FILE, "w", encoding="utf-8") as f:
         json.dump(all_updates, f, ensure_ascii=False, indent=2)
