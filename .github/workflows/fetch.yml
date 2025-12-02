@@ -1,13 +1,15 @@
 name: Fetch Genshin Updates
 
 on:
-  workflow_dispatch:   # 手動実行
+  workflow_dispatch:   # 手動実行用
   schedule:           # 毎日0時に自動実行
     - cron: '0 0 * * *'
 
 jobs:
   fetch:
     runs-on: ubuntu-latest
+    env:
+      GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}  # ここで API キーを設定
 
     steps:
       - name: Checkout repository
@@ -21,12 +23,10 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install requests beautifulsoup4 google-genai
+          pip install requests beautifulsoup4 google-generativeai
 
       - name: Run scraping script
         run: python scripts/fetch_with_gemini.py
-        env:
-          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
 
       - name: Commit and push JSON
         run: |
