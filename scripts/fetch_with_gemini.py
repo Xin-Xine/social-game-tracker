@@ -42,14 +42,14 @@ URL:
 
     try:
         response = client.models.generate_content(
-            model="gemini-2.5-flash",
-            contents=prompt,
-            config=types.GenerateContentConfig(
-                temperature=0.0,
-                max_output_tokens=1000,
-                url_context=types.UrlContext(url=url)  # ここで URL context tool を利用
-            )
+        model="gemini-2.5-flash",
+        contents=prompt,
+        config=types.GenerateContentConfig(
+            temperature=0.0,
+            max_output_tokens=1000,
+            url_contexts=[types.UrlContext(uri=url)]  # ここが最新仕様
         )
+    )
         text = getattr(response, "output_text", None)
         if not text:
             print(f"No output from AI for {game_name}")
