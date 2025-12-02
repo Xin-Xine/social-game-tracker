@@ -2,6 +2,7 @@ import os
 import json
 import requests
 from google import genai
+from google.genai import types
 
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 if not GEMINI_API_KEY:
@@ -10,7 +11,8 @@ if not GEMINI_API_KEY:
 client = genai.Client(api_key=GEMINI_API_KEY)
 
 GAMES = [
-    {"name": "原神", "url": "https://genshin.hoyoverse.com/ja/news"}
+    {"name": "原神", "url": "https://genshin.hoyoverse.com/ja/news"},
+    # 他ゲームもここに追加可能
 ]
 
 OUTPUT_FILE = "data/result.json"
@@ -22,15 +24,15 @@ def fetch_html(url):
 
 def call_gemini_ai(html, game_name):
     prompt = f"""
-ゲーム「{game_name}」公式お知らせページの HTML が以下です。
-これを解析し、アップデート情報（バージョンアップ、不具合修正、メンテナンス、イベント開始など）だけを抽出して、以下の JSON 配列形式で返してください。
+ゲーム「{game_name}」公式お知らせページHTMLです。
+HTMLからアップデート情報のみを抽出し、以下のJSON形式で出力してください。
 
-JSON フォーマット:
+JSON形式例:
 [
   {{
     "game": "ゲーム名",
     "date": "YYYY-MM-DD",
-    "title": "タイトル",
+    "title": "アップデートタイトル",
     "description": "内容要約",
     "link": "公式URL"
   }}
@@ -42,14 +44,17 @@ HTML:
     response = client.models.generate_content(
         model="gemini-2.5-flash",
         contents=prompt,
-        temperature=0,
-        max_output_tokens=1000
+        config=types.GenerateContentConfig(
+            temperature=0.0,
+            max_output_tokens=1000
+        )
     )
+
     text = response.text
     try:
         return json.loads(text)
     except json.JSONDecodeError:
-        print(f"JSON parse error for {game_name}, raw output:\n{text}")
+        print(f"AI parse failed for {game_name}, raw output:\n{text}")
         return []
 
 def main():
