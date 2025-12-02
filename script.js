@@ -6,14 +6,12 @@ async function loadUpdates() {
     const res = await fetch("./data/result.json");
     const data = await res.json();
 
-    // 日付ごとにグループ化
     const grouped = {};
     data.forEach(item => {
       if (!grouped[item.date]) grouped[item.date] = [];
       grouped[item.date].push(item);
     });
 
-    // カレンダー形式で表示
     container.innerHTML = Object.keys(grouped).sort().map(date => {
       return `
         <div class="day">
@@ -35,8 +33,7 @@ async function loadUpdates() {
   }
 }
 
-// ボタンで手動更新（ローカルテスト用）
-document.getElementById("refresh").addEventListener("click", async () => {
+document.getElementById("refresh").addEventListener("click", () => {
   alert("ローカルでは Python を実行してください。\nGitHub上では Actions の手動実行で更新されます。");
 });
 
