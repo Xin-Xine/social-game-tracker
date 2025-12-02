@@ -36,5 +36,4 @@ async function loadUpdates() {
   }
 }
 
-// ページ読み込み時に更新情報を表示
 window.addEventListener("DOMContentLoaded", loadUpdates);
