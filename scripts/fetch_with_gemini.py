@@ -1,35 +1,27 @@
 import os
 import json
 import requests
-from bs4 import BeautifulSoup
 from google import genai
 
 OUTPUT_FILE = "data/result.json"
-
 client = genai.Client(api_key=os.environ.get("GEMINI_API_KEY"))
 
 def fetch_genshin_updates():
-    url = "https://genshin.hoyoverse.com/ja/news"
+    # 公式APIを直接叩く（例: noticeカテゴリ）
+    url = "https://genshin.hoyoverse.com/content/yuanshen/getNewsList?game=genshin&category=notice&page=1"
     try:
-        # HTML取得
-        response = requests.get(url, timeout=10)
-        response.raise_for_status()
-        html = response.text
-        print("=== HTML取得成功 ===")
-        print(html[:1000])  # 先頭1000文字だけログに出す（長すぎ防止）
+        res = requests.get(url, timeout=10)
+        res.raise_for_status()
+        data = res.json()
+        print("=== API取得成功 ===")
+        print(json.dumps(data, ensure_ascii=False, indent=2)[:1000])  # 先頭だけログ
 
-        # BeautifulSoupで記事部分を抽出
-        soup = BeautifulSoup(html, "html.parser")
-        articles = soup.select("li.news-item")
-        if not articles:
-            print("記事要素が見つかりませんでした")
-        text_blocks = [a.get_text(" ", strip=True) for a in articles]
-        print(f"抽出記事数: {len(text_blocks)}")
+        # 記事リストをAIに渡す
+        articles = data.get("data", {}).get("list", [])
+        text_blocks = [a.get("title", "") + " " + a.get("content", "") for a in articles]
 
-        # AIに渡すプロンプト
-        chunk = "\n".join(text_blocks[:10])  # とりあえず最初の10件だけ
         prompt = f"""
-ゲーム「原神」公式お知らせページのテキストです。
+以下はゲーム「原神」公式サイトの最新お知らせです。
 このテキストから最新アップデート情報のみを以下のJSON形式で抽出してください。
 
 JSON形式例:
@@ -39,27 +31,24 @@ JSON形式例:
     "date": "YYYY-MM-DD",
     "title": "アップデートタイトル",
     "description": "内容要約",
-    "link": "{url}"
+    "link": "公式URL"
   }}
 ]
 
 テキスト:
-{chunk}
+{text_blocks}
 """
-        ai_response = client.models.generate_content(
+        response = client.models.generate_content(
             model="gemini-2.5",
-            contents=[prompt],
-            temperature=0.0,
-            max_output_tokens=1000
+            contents=[prompt]
         )
-
         print("=== AI返り値 ===")
-        print(ai_response.text)
+        print(response.text)
 
         updates = []
-        if ai_response.text:
+        if response.text:
             try:
-                updates = json.loads(ai_response.text)
+                updates = json.loads(response.text)
             except Exception as e:
                 print(f"JSON parse error: {e}")
         return updates
